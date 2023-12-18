@@ -13,6 +13,7 @@ class Player(BaseModel):
     bomb_count: Optional[int] = None
     observer: bool = False
     live: bool = True
+    count: int = 0
     ws: WebSocket
 
 class Block(BaseModel):
@@ -47,6 +48,7 @@ class FootGame():
             self.map[player.pos_x][player.pos_y].owner = player
             if self.now_player is None:
                 self.now_player = player
+            player.count = 1
         
         self.players = players
     
@@ -102,9 +104,10 @@ class FootGame():
         target_block = self.map[target_x][target_y]
         player.pos_x = target_x
         player.pos_y = target_y
+        player.count += 1
         await self.broadcast({
             "type": "INFO",
-            "data": f"{player.user.display_name} 移動完成。"
+            "data": f"{player.user.display_name} 移動完成。 第 {player.count} 個 {player.user.display_name} 出現了。"
         })
 
         if target_block.owner is None:
