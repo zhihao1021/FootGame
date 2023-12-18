@@ -48,7 +48,7 @@ export default function GameBlock(props: propsType): ReactElement {
                                     key={y}
                                     className="block"
                                     data-bomb={block.has_bomb}
-                                    data-now={gameData.player.pos_x === x && gameData.player.pos_y === y}
+                                    data-now={block.owner?.pos_x === x && block.owner?.pos_y === y}
                                     onClick={() => {
                                         ws.send(JSON.stringify({
                                             type: "MOVE",

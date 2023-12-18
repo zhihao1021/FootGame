@@ -8,6 +8,7 @@ export interface Player {
     bomb_count: number,
     observer: boolean,
     live: boolean,
+    count: number
 }
 
 export interface Block {

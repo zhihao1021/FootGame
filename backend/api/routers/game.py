@@ -27,7 +27,7 @@ class RoomManger():
     def __init__(self, user: User, ws: WebSocket, setting: GameSetting) -> None:
         player = Player(
             user=user,
-            ws=ws
+            ws=ws,
         )
         self.game = None
         self.players = list([])
@@ -89,7 +89,7 @@ class RoomManger():
                 user=user,
                 ws=ws
             )
-            if len(list(filter(lambda player: not player.observer, self.players))) > len(self.setting.start_position):
+            if len(list(filter(lambda player: not player.observer, self.players))) >= len(self.setting.start_position):
                 player.observer = True
                 player.live = False
             self.players.append(player)

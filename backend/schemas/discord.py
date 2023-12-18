@@ -12,5 +12,5 @@ class DiscordOAuth(BaseModel):
 class DiscordUser(BaseModel):
     id: int
     username: str
-    global_name: str
+    global_name: Optional[str]
     avatar: Optional[str]

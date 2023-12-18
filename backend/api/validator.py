@@ -95,7 +95,7 @@ async def fetch_user(data: DiscordOAuth) -> UserSecret:
     user_secret = UserSecret(
         id=discord_user.id,
         username=discord_user.username,
-        display_name=discord_user.global_name,
+        display_name=discord_user.global_name or discord_user.username,
         avatar_url=f"https://cdn.discordapp.com/avatars/{discord_user.id}/{discord_user.avatar}.png" if discord_user.avatar else "https://cdn.discordapp.com/embed/avatars/0.png",
         discord_oauth=data
     )
