@@ -172,7 +172,8 @@ class FootGame():
                 target_block = self.map[tx][ty]
                 if target_block.owner is None: continue
                 if target_block.owner != player:
-                    return True
+                    if target_block.owner.pos_x == tx and target_block.owner.pos_y == ty:
+                        return True
         return False
 
     async def next_round(self, update: bool = True):
