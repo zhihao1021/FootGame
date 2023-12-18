@@ -1,6 +1,7 @@
 from fastapi.websockets import WebSocket, WebSocketState
 from pydantic import BaseModel, ConfigDict
 
+from random import choice
 from typing import Optional
 
 from schemas.user import User
@@ -17,7 +18,7 @@ class Player(BaseModel):
     ws: WebSocket
 
 class Block(BaseModel):
-    owner: Optional[Player] = None
+    owners: list[Player] = []
     has_bomb: bool = False
 
 class FootGame():
@@ -45,10 +46,9 @@ class FootGame():
         for i, player in enumerate(filter(lambda player: not player.observer, players)):
             player.bomb_count = bomb_count
             player.pos_x, player.pos_y = start_position[i]
-            self.map[player.pos_x][player.pos_y].owner = player
-            if self.now_player is None:
-                self.now_player = player
+            self.map[player.pos_x][player.pos_y].owners = [player]
             player.count = 1
+        self.now_player = choice(list(filter(lambda player: not player.observer, players)))
         
         self.players = players
     
@@ -110,53 +110,65 @@ class FootGame():
             "data": f"{player.user.display_name} 移動完成。 第 {player.count} 個 {player.user.display_name} 出現了。"
         })
 
-        if target_block.owner is None:
-            target_block.owner = player
+        if len(target_block.owners) == 0:
+            target_block.owners.append(player)
             target_block.has_bomb = bomb
         else:
-            ox, oy = target_block.owner.pos_x, target_block.owner.pos_y
-            if ox == target_x and oy == target_y:
-                target_block.owner.live = False
-                await self.broadcast({
-                    "type": "ERROR",
-                    "data": f"{target_block.owner.user.display_name} 被 {player.user.display_name} 踩死了。"
-                })
-                target_block.owner = player
-                target_block.has_bomb = bomb
-            elif target_block.has_bomb:
-                player.live = False
-                target_block.has_bomb = False
-                await self.broadcast({
-                    "type": "ERROR",
-                    "data": f"{player.user.display_name} 被 {target_block.owner.user.display_name} 炸死了。"
-                })
-            else:
-                await player.ws.send_json({
-                    "type": "WARNING",
-                    "data": f"你踩到 {target_block.owner.user.display_name} 的足跡了。"
-                })
-                await target_block.owner.ws.send_json({
-                    "type": "WARNING",
-                    "data": f"你的足跡被 {player.user.display_name} 踩到了。"
-                })
-                target_block.owner = player
-                target_block.has_bomb = bomb
+            for owner in target_block.owners:
+                ox, oy = owner.pos_x, owner.pos_y
+                if ox == target_x and oy == target_y:
+                    owner.live = False
+                    await self.broadcast({
+                        "type": "ERROR",
+                        "data": f"{owner.user.display_name} 被 {player.user.display_name} 踩死了。"
+                    })
+                    target_block.owners = [player]
+                    target_block.has_bomb = bomb
+                    break
+                elif target_block.has_bomb:
+                    player.live = False
+                    target_block.has_bomb = False
+                    await self.broadcast({
+                        "type": "ERROR",
+                        "data": f"{player.user.display_name} 被 {owner.user.display_name} 炸死了。"
+                    })
+                    break
+                else:
+                    await player.ws.send_json({
+                        "type": "WARNING",
+                        "data": f"你踩到 {owner.user.display_name} 的足跡了。"
+                    })
+                    await owner.ws.send_json({
+                        "type": "WARNING",
+                        "data": f"你的足跡被 {player.user.display_name} 踩到了。"
+                    })
+                    target_block.owners.append(player)
+                    target_block.has_bomb = bomb
+                    break
         
         await self.next_round()
             
         
     def generate_map(self, player: Player):
-        def dump_block(block: Block):
-            data = {
-                "owner": None if block.owner is None else block.owner.model_dump(exclude=["ws"]),
-                "has_bomb": block.has_bomb
-            }
+        def dump_block(block: Block, player: Optional[Player] = None):
+            if player is None:
+                data = {
+                    "owner": None if len(block.owners) == 0 else block.owners[-1].model_dump(exclude=["ws"]),
+                    "has_bomb": block.has_bomb
+                }
+            else:
+                data = {
+                    "owner": None if player not in block.owners else player.model_dump(exclude=["ws"]),
+                    "has_bomb": block.has_bomb
+                }
             return data
+        
         if player.observer or not player.live or self.end:
             return list(map(lambda line: list(map(dump_block, line)), self.map))
+        
         return list(map(
             lambda line: list(map(
-                lambda b: dump_block(b) if b.owner == player else dump_block(Block()),
+                lambda b: dump_block(b, player),
                 line
             )),
             self.map
@@ -165,18 +177,12 @@ class FootGame():
     def check_around(self, player: Player) -> bool:
         if player.observer or not player.live:
             return False
-        for dx in range(-1, 2):
-            for dy in range(-1, 2):
-                if dx == 0 and dy == 0: continue
-                tx: int = player.pos_x + dx
-                ty: int = player.pos_y + dy
-                if tx < 0 or tx >= len(self.map): continue
-                if ty < 0 or ty >= len(self.map[0]): continue
-                target_block = self.map[tx][ty]
-                if target_block.owner is None: continue
-                if target_block.owner != player:
-                    if target_block.owner.pos_x == tx and target_block.owner.pos_y == ty:
-                        return True
+        for other in self.players:
+            if other == player: continue
+            if abs(other.pos_x - player.pos_x) == 1:
+                return True
+            if abs(other.pos_y - player.pos_y) == 1:
+                return True
         return False
 
     async def next_round(self, update: bool = True):

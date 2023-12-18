@@ -58,6 +58,12 @@ class RoomManger():
                     "data": "遊戲已經開始了。"
                 })
                 return
+            if len(self.players) < 2:
+                await player.ws.send_json({
+                    "type": "WARNING",
+                    "data": "房間人數不足。"
+                })
+                return
             self.game = FootGame(
                 **self.setting.model_dump(), players=self.players)
             await player.ws.send_json({
@@ -78,7 +84,7 @@ class RoomManger():
                 "data": "遊戲已經開始了。"
             })
             return
-        elif user in filter(lambda player: player.user, self.players):
+        elif user.id in filter(lambda player: player.user.id, self.players):
             await ws.send_json({
                 "type": "REJECT",
                 "data": "你已經在遊戲裡了。"
@@ -164,25 +170,25 @@ async def game_room(room_id: str, ws: WebSocket):
 
     try:
         while True:
-            # try:
-            data = await ws.receive_json()
-            if data["type"] == "START":
-                await room.start(player)
-            elif data["type"] == "MOVE":
-                if room.game is None:
-                    await ws.send_json({
-                        "type": "WARNING",
-                        "data": "遊戲尚未開始。"
-                    })
-                    continue
-                await room.game.move(
-                    player,
-                    target_x=data["data"]["x"],
-                    target_y=data["data"]["y"],
-                    bomb=data["data"]["bomb"]
-                )
-            # except WebSocketDisconnect as e: raise e
-            # except: pass
+            try:
+                data = await ws.receive_json()
+                if data["type"] == "START":
+                    await room.start(player)
+                elif data["type"] == "MOVE":
+                    if room.game is None:
+                        await ws.send_json({
+                            "type": "WARNING",
+                            "data": "遊戲尚未開始。"
+                        })
+                        continue
+                    await room.game.move(
+                        player,
+                        target_x=data["data"]["x"],
+                        target_y=data["data"]["y"],
+                        bomb=data["data"]["bomb"]
+                    )
+            except WebSocketDisconnect as e: raise e
+            except: pass
     except WebSocketDisconnect:
         await room.exit(player)
         if room.host is None or len(room.players) == 0:
