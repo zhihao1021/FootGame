@@ -87,7 +87,7 @@ export default function Game(): ReactElement {
     useEffect(() => {
         if (ws !== undefined || code === null) return;
         let url = process.env.REACT_APP_API_END_POINT ?? window.location.origin;
-        url = url.startsWith("http") ? url.replace("http", "ws") : window.location.origin.replace("http", "ws");
+        url = url.startsWith("http") ? url.replace("http", "ws") : `${window.location.origin.replace("http", "ws")}${process.env.REACT_APP_API_END_POINT}`;
 
         ws = new WebSocket(`${url}/game/ws/${code}`);
         ws.addEventListener("open", () => {
