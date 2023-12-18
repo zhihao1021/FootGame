@@ -29,15 +29,17 @@ class RoomManger():
             user=user,
             ws=ws
         )
+        self.game = None
+        self.players = list([])
         self.host = player
         self.players.append(player)
         self.setting = setting
 
     async def broadcast(self, data):
         for player in self.players:
-            try:
+            # try:
                 await player.ws.send_json(data)
-            except RuntimeError: pass
+            # except RuntimeError: pass
 
     async def update_user(self):
         await self.broadcast({
@@ -99,22 +101,23 @@ class RoomManger():
             return player
 
     async def exit(self, player: Player):
-        if player not in self.players:
-            return
         if self.game is None:
             self.players.remove(player)
-            if self.host == player and len(self.players) > 0:
-                self.host = self.players[0]
-                await self.broadcast({
-                    "type": "WARNING",
-                    "data": f"{player.user.display_name} 離開遊戲。"
-                })
-            else:
-                self.host = None
-                return
         else:
             await self.game.exit(player)
 
+        if self.host == player and len(self.players) > 0:
+            self.host = self.players[0]
+        elif len(self.players) == 0:
+            self.host = None
+
+        if len(self.players) == 0:
+            return
+
+        await self.broadcast({
+            "type": "WARNING",
+            "data": f"{player.user.display_name} 離開遊戲。"
+        })
         await self.update_user()
 
 

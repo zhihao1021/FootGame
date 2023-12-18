@@ -33,7 +33,9 @@ class FootGame():
         start_position: list[tuple[int, int]],
         players: list[Player]
     ) -> None:
-        self.map = []
+        self.map = list([])
+        self.now_player = None
+        self.players = list([])
         self.end = False
         for _ in range(width):
             self.map.append([])
@@ -55,16 +57,18 @@ class FootGame():
             except: pass
     
     async def exit(self, player: Player):
-        if player not in self.players: return
-        player.live = False
-        await self.broadcast({
-            "type": "WARNING",
-            "data": f"{player.user.display_name} 離開遊戲。"
-        })
+        live_players: list[Player] = list(filter(lambda player: player.live and not player.observer, self.players))
         if player == self.now_player and not self.end:
-            await self.next_round()
-        if player in self.players:
+            now_index = live_players.index(player)
+            self.now_player = live_players[(now_index + 1) % len(live_players)]
             self.players.remove(player)
+            await self.next_round(False)
+        else:
+            self.players.remove(player)
+            if (len(live_players) <= 2):
+                await self.next_round(False)
+        player.live = False
+
 
     async def move(self, player: Player, target_x: int, target_y: int, bomb: bool):
         if self.end: return
@@ -102,14 +106,8 @@ class FootGame():
             "type": "INFO",
             "data": f"{player.user.display_name} 移動完成。"
         })
-        if target_block.has_bomb:
-            player.live = False
-            target_block.has_bomb = False
-            await self.broadcast({
-                "type": "ERROR",
-                "data": f"{player.user.display_name} 被 {target_block.owner.user.display_name} 炸死了。"
-            })
-        elif target_block.owner is None:
+
+        if target_block.owner is None:
             target_block.owner = player
             target_block.has_bomb = bomb
         else:
@@ -120,6 +118,15 @@ class FootGame():
                     "type": "ERROR",
                     "data": f"{target_block.owner.user.display_name} 被 {player.user.display_name} 踩死了。"
                 })
+                target_block.owner = player
+                target_block.has_bomb = bomb
+            elif target_block.has_bomb:
+                player.live = False
+                target_block.has_bomb = False
+                await self.broadcast({
+                    "type": "ERROR",
+                    "data": f"{player.user.display_name} 被 {target_block.owner.user.display_name} 炸死了。"
+                })
             else:
                 await player.ws.send_json({
                     "type": "WARNING",
@@ -129,8 +136,8 @@ class FootGame():
                     "type": "WARNING",
                     "data": f"你的足跡被 {player.user.display_name} 踩到了。"
                 })
-            target_block.owner = player
-            target_block.has_bomb = bomb
+                target_block.owner = player
+                target_block.has_bomb = bomb
         
         await self.next_round()
             
@@ -158,7 +165,8 @@ class FootGame():
         for dx in range(-1, 2):
             for dy in range(-1, 2):
                 if dx == 0 and dy == 0: continue
-                tx, ty = player.pos_x + dx, player.pos_y + dy
+                tx: int = player.pos_x + dx
+                ty: int = player.pos_y + dy
                 if tx < 0 or tx >= len(self.map): continue
                 if ty < 0 or ty >= len(self.map[0]): continue
                 target_block = self.map[tx][ty]
@@ -167,14 +175,15 @@ class FootGame():
                     return True
         return False
 
-    async def next_round(self):
+    async def next_round(self, update: bool = True):
         players: list[Player] = list(filter(lambda player: not player.observer, self.players))
-        live_players: list[Player] = list(filter(lambda player: player.live and player.ws.state != WebSocketState.DISCONNECTED, players))
+        live_players: list[Player] = list(filter(lambda player: player.live, players))
         if len(live_players) > 1:
-            now_player_index = players.index(self.now_player) + 1
-            while not players[now_player_index % len(players)].live:
-                now_player_index += 1
-            self.now_player = players[now_player_index % len(players)]
+            if update:
+                now_player_index = players.index(self.now_player) + 1
+                while not players[now_player_index % len(players)].live:
+                    now_player_index += 1
+                self.now_player = players[now_player_index % len(players)]
             await self.now_player.ws.send_json({
                 "type": "INFO",
                 "data": "輪到你了。"
