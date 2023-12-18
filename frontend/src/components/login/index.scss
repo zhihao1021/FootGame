@@ -1,0 +1,52 @@
+#login {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .box {
+        margin: auto;
+        background-color: #FFF;
+        border-radius: 1em;
+        width: 24rem;
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        box-shadow: 0.25rem 0.25rem 0.5rem -0.25rem #000;
+        h2 {
+            margin: 0;
+            font-size: 2rem;
+            text-align: center;
+        }
+        a {
+            background-color: #5865F2;
+            display: block;
+            padding: 1.5rem 2rem;
+            border-radius: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0.25rem 0.25rem 0.5rem -0.25rem #0000;
+            transform: translateY(0);
+            transition: transform 0.3s, box-shadow 0.3s;
+            img {
+                max-width: 20rem;
+                object-fit: contain;
+            }
+        }
+        a:hover {
+            box-shadow: 0.25rem 0.25rem 0.5rem -0.25rem #000;
+            transform: translateY(-0.1em);
+        }
+        .errorMessage {
+            display: none;
+            font-size: 1.2rem;
+            text-align: center;
+            color: #FFF;
+            background-color: #F66;
+            border-radius: 0.8rem;
+            padding: 0.5rem;
+        }
+        .errorMessage[data-show="true"] {
+            display: block;
+        }
+    }
+}

@@ -1,0 +1,64 @@
+#game {
+    display: flex;
+    width: 85rem;
+    max-width: 90vw;
+    margin: auto;
+    padding: 5vh 0;
+    height: 90vh;
+    gap: 2vw;
+    > div {
+        background-color: #FFF;
+        padding: 1.2rem;
+        border-radius: 1rem;
+        position: relative;
+        h3 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        > .pageButton {
+            display: none;
+        }
+    }
+    .gameBlock {
+        flex: 3;
+    }
+    .infoBlock {
+        flex: 1;
+        max-width: 25vw;
+        min-width: 18rem;
+    }
+}
+
+@media (max-aspect-ratio: 1/1) {
+    #game {
+        display: block;
+        overflow-y: hidden;
+        height: 100vh;
+        padding: 0;
+        margin: auto;
+        flex-direction: column;
+        scroll-behavior: smooth;
+        > div {
+            height: calc(90vh - 6rem);
+            padding-bottom: 4.8rem;
+            margin: 5vh 0;
+            > .pageButton {
+                display: block;
+                position: absolute;
+                bottom: 1rem;
+                right: 1rem;
+                color: #FFF;
+                background-color: #222;
+                border: none;
+                font-size: 1.5rem;
+                padding: 0.3em 1.2em;
+                border-radius: 0.5rem;
+                cursor: pointer;
+                user-select: none;
+            }
+        }
+        .infoBlock {
+            max-width: none;
+        }
+    }
+}

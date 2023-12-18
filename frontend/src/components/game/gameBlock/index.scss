@@ -1,0 +1,94 @@
+#game .gameBlock {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    h3 {
+        text-align: left;
+        width: 100%;
+    }
+    .wait {
+        font-size: 3rem;
+        color: #888;
+        text-align: center;
+        margin: auto;
+    }
+    button.wait {
+        color: #FFF;
+        background-color: #090;
+        padding: 0.2em 1em;
+        border: none;
+        border-radius: 0.5em;
+        cursor: pointer;
+        box-shadow: 0.2rem 0.2rem 0.4rem -0.2rem #000;
+        transform: translateY(0);
+        transition: transform 0.5s, background-color 0.5s;
+    }
+    button.wait:hover {
+        background-color: #2A2;
+        transform: translateY(-0.2em);
+    }
+    .buttonBar {
+        display: flex;
+        margin-right: auto;
+        font-size: 1.2rem;
+        height: 2rem;
+        line-height: 2rem;
+        gap: 1.5rem;
+        label {
+            height: 2rem;
+            line-height: 2rem;
+            font-size: 1rem;
+            padding: 0 1em;
+            border-radius: 0.5rem;
+            color: #FFF;
+            background-color: #BBB;
+            cursor: pointer;
+            transform: translateY(0);
+            transition: transform 0.5s, background-color 0.5s;
+            box-shadow: 2px 2px 4px -2px #222;
+            input {
+                display: none;
+            }
+        }
+        label:hover {
+            background-color: #888;
+            transform: translateY(-0.1em);
+        }
+        label:has(input:checked) {
+            background-color: #F00;
+        }
+    }
+    .gameBoard {
+        flex: 1;
+        overflow: auto;
+        max-width: 90%;
+        padding: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        > div {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            .block {
+                height: 3rem;
+                width: 3rem;
+                border: 2px solid #000;
+                overflow: hidden;
+                border-radius: 0.5rem;
+                img {
+                    width: 100%;
+                    display: block;
+                    object-fit: contain;
+                }
+            }
+            .block[data-bomb="true"] {
+                border-color: #F00;
+            }
+            .block[data-now="true"] {
+                border-color: #F80;
+            }
+        }
+    }
+}
