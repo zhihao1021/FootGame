@@ -37,6 +37,7 @@ export default function GameBlock(props: propsType): ReactElement {
                         else setBombState(false);
                     }} />
                 </label>
+                <div className="around" data-show={gameData.around}>周圍出現足跡</div>
             </div>
             <div className="gameBoard">
                 {
